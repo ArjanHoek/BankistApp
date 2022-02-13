@@ -1,47 +1,6 @@
 'use strict';
 
-/////////////////////////////////////////////////
-/////////////////////////////////////////////////
-// BANKIST APP
-
-// Data
-// const account1 = {
-//   owner: 'Jonas Schmedtmann',
-//   movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
-//   interestRate: 1.2, // %
-//   pin: 1111,
-// };
-
-// const account2 = {
-//   owner: 'Jessica Davis',
-//   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
-//   interestRate: 1.5,
-//   pin: 2222,
-// };
-
-// const account3 = {
-//   owner: 'Steven Thomas Williams',
-//   movements: [200, -200, 340, -300, -20, 50, 400, -460],
-//   interestRate: 0.7,
-//   pin: 3333,
-// };
-
-// const account4 = {
-//   owner: 'Sarah Smith',
-//   movements: [430, 1000, 700, 50, 90],
-//   interestRate: 1,
-//   pin: 4444,
-// };
-
-// const account5 = {
-//   owner: 'Arjan Hoek',
-//   movements: [],
-//   interestRate: 1,
-//   pin: 5555,
-// };
-
-// const accounts = [account1, account2, account3, account4, account5];
-
+// DATA
 const account1 = {
   owner: 'Jonas Schmedtmann',
   movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300],
@@ -84,7 +43,7 @@ const account2 = {
 
 const accounts = [account1, account2];
 
-// Elements
+// SELECTORS
 const labelWelcome = document.querySelector('.welcome');
 const labelDate = document.querySelector('.date');
 const labelBalance = document.querySelector('.balance__value');
@@ -110,6 +69,7 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+// FUNCTIONS
 const displayMovements = function (movements) {
   containerMovements.innerHTML = '';
 
@@ -124,7 +84,7 @@ const displayMovements = function (movements) {
         <div class="movements__type movements__type--${type}">${
       i + 1
     } ${type}</div>
-        <div class="movements__value">${mov}€</div>
+        <div class="movements__value">${mov.toFixed(2)}€</div>
       </div>
     `;
 
@@ -142,7 +102,7 @@ const calcDisplayBalance = function (user) {
   }
 
   const balance = getUserBalance(user);
-  labelBalance.textContent = `${balance}€`;
+  labelBalance.textContent = `${balance.toFixed(2)}€`;
 };
 
 const calcDisplaySummary = function (user) {
@@ -159,20 +119,20 @@ const calcDisplaySummary = function (user) {
   const deposits = movements.filter(m => m > 0);
   const sumIn = deposits.reduce((acc, cur) => acc + cur, 0);
 
-  labelSumIn.textContent = `${sumIn}€`;
+  labelSumIn.textContent = `${sumIn.toFixed(2)}€`;
 
   const sumOut = movements
     .filter(m => m < 0)
     .reduce((acc, cur) => acc + cur, 0);
 
-  labelSumOut.textContent = `${Math.abs(sumOut)}€`;
+  labelSumOut.textContent = `${Math.abs(sumOut.toFixed(2))}€`;
 
   const sumInterest = deposits.reduce((acc, cur) => {
     const interest = (cur * interestRate) / 100;
     return interest > 1 ? acc + interest : acc;
   }, 0);
 
-  labelSumInterest.textContent = `${sumInterest}€`;
+  labelSumInterest.textContent = `${sumInterest.toFixed(2)}€`;
 };
 
 const createUserName = user =>
@@ -195,9 +155,6 @@ const updateDisplay = user => {
   calcDisplaySummary(user);
 };
 
-// Login
-let currentUser;
-
 const logout = () => {
   labelWelcome.textContent = '';
   containerApp.style.opacity = 0;
@@ -206,7 +163,7 @@ const logout = () => {
 
 const login = () => {
   const inputUserName = inputLoginUsername.value;
-  const inputPin = Number(inputLoginPin.value);
+  const inputPin = +inputLoginPin.value;
 
   inputLoginUsername.value = inputLoginPin.value = '';
   inputLoginPin.blur();
@@ -233,7 +190,7 @@ const login = () => {
 
 const transfer = () => {
   const inputUserName = inputTransferTo.value;
-  const inputAmount = Number(inputTransferAmount.value);
+  const inputAmount = +inputTransferAmount.value;
 
   inputTransferTo.value = inputTransferAmount.value = '';
   inputTransferAmount.blur();
@@ -263,7 +220,7 @@ const transfer = () => {
 
 const closeAccount = user => {
   const userNameInput = inputCloseUsername.value;
-  const pinInput = Number(inputClosePin.value);
+  const pinInput = +inputClosePin.value;
 
   inputCloseUsername.value = inputClosePin.value = '';
 
@@ -281,7 +238,7 @@ const closeAccount = user => {
 };
 
 const loan = () => {
-  const inputAmount = Number(inputLoanAmount.value);
+  const inputAmount = Math.floor(inputLoanAmount.value);
   inputLoanAmount.value = '';
 
   if (inputAmount <= 0) {
@@ -298,8 +255,6 @@ const loan = () => {
   updateDisplay(currentUser);
 };
 
-let isSorted = false;
-
 const sort = () => {
   if (!isSorted) {
     displayMovements(currentUser.movements.slice().sort((a, b) => a - b));
@@ -310,6 +265,11 @@ const sort = () => {
   isSorted = !isSorted;
 };
 
+// APPLICATION STATE
+let currentUser;
+let isSorted = false;
+
+// EVENT LISTENERS
 btnSort.addEventListener('click', sort);
 
 btnLoan.addEventListener('click', function (e) {
@@ -337,10 +297,7 @@ btnTransfer.addEventListener('click', function (e) {
   transfer();
 });
 
-/////////////////////////////////////////////////
-/////////////////////////////////////////////////
 // LECTURES
-
 const currencies = new Map([
   ['USD', 'United States dollar'],
   ['EUR', 'Euro'],
@@ -348,5 +305,3 @@ const currencies = new Map([
 ]);
 
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
-
-/////////////////////////////////////////////////
