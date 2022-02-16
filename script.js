@@ -3,19 +3,46 @@
 // DATA
 const account1 = {
   owner: 'Jonas Schmedtmann',
-  movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300],
+  // movements: [200, 455.23, -306.5, 25000, -642.21, -133.9, 79.97, 1300],
   interestRate: 1.2, // %
   pin: 1111,
-
-  movementsDates: [
-    '2019-11-18T21:31:17.178Z',
-    '2019-12-23T07:42:02.383Z',
-    '2020-01-28T09:15:04.904Z',
-    '2020-04-01T10:17:24.185Z',
-    '2020-05-08T14:11:59.604Z',
-    '2020-05-27T17:01:17.194Z',
-    '2020-07-11T23:36:17.929Z',
-    '2020-07-12T10:51:36.790Z',
+  movements: [
+    {
+      amount: 200,
+      date: '2020-11-18T21:31:17.178Z',
+    },
+    {
+      amount: 455.23,
+      date: '2020-12-23T07:42:02.383Z',
+    },
+    {
+      amount: -306.5,
+      date: '2021-01-28T09:15:04.904Z',
+    },
+    {
+      amount: 25000,
+      date: '2021-04-01T10:17:24.185Z',
+    },
+    {
+      amount: -642.21,
+      date: '2021-05-08T14:11:59.604Z',
+    },
+    {
+      amount: -133.9,
+      date: '2021-05-27T17:01:17.194Z',
+    },
+    {
+      amount: 79.97,
+      date: '2022-02-13T23:36:17.929Z',
+    },
+    {
+      amount: 1300,
+      date: '2022-02-15T01:51:36.790Z',
+    },
+    {
+      amount: 1300,
+      date: '2022-02-15T07:51:36.790Z',
+    },
   ],
   currency: 'EUR',
   locale: 'pt-PT', // de-DE
@@ -23,20 +50,42 @@ const account1 = {
 
 const account2 = {
   owner: 'Jessica Davis',
-  movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
+  movements: [
+    {
+      amount: 5000,
+      date: '2020-11-01T13:15:33.035Z',
+    },
+    {
+      amount: 3400,
+      date: '2020-11-30T09:48:16.867Z',
+    },
+    {
+      amount: -150,
+      date: '2020-12-25T06:04:23.907Z',
+    },
+    {
+      amount: -790,
+      date: '2021-01-25T14:18:46.235Z',
+    },
+    {
+      amount: -3210,
+      date: '2021-02-05T16:33:06.386Z',
+    },
+    {
+      amount: -1000,
+      date: '2021-04-10T14:43:26.374Z',
+    },
+    {
+      amount: 8500,
+      date: '2021-06-25T18:49:59.371Z',
+    },
+    {
+      amount: -30,
+      date: '2021-07-26T12:01:20.894Z',
+    },
+  ],
   interestRate: 1.5,
   pin: 2222,
-
-  movementsDates: [
-    '2019-11-01T13:15:33.035Z',
-    '2019-11-30T09:48:16.867Z',
-    '2019-12-25T06:04:23.907Z',
-    '2020-01-25T14:18:46.235Z',
-    '2020-02-05T16:33:06.386Z',
-    '2020-04-10T14:43:26.374Z',
-    '2020-06-25T18:49:59.371Z',
-    '2020-07-26T12:01:20.894Z',
-  ],
   currency: 'USD',
   locale: 'en-US',
 };
@@ -69,7 +118,37 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
+// INSTANCES
+const createCurrencyFormatter = (options, locale = navigator.language) =>
+  new Intl.NumberFormat(locale, options);
+
+const getDateFormatter = (options, locale = navigator.language) =>
+  new Intl.DateTimeFormat(locale, options);
+
 // FUNCTIONS
+const zeroPad = (val, length = 2) => val.toString().padStart(length, 0);
+
+const destructureDate = date => ({
+  day: zeroPad(date.getDate()),
+  month: zeroPad(date.getMonth() + 1),
+  year: date.getFullYear(),
+  hour: zeroPad(date.getHours()),
+  minutes: zeroPad(date.getMinutes()),
+});
+
+const formatMovementDate = date => {
+  const calcDaysPassed = (date1, date2) =>
+    Math.round(Math.abs(date2 - date1) / (1000 * 60 * 60 * 24));
+
+  const daysPassed = calcDaysPassed(new Date(), date);
+
+  if (!daysPassed) return 'Today';
+  if (daysPassed === 1) return 'Yesterday';
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+
+  return getDateFormatter({}, currentUser.locale).format(date);
+};
+
 const displayMovements = function (movements) {
   containerMovements.innerHTML = '';
 
@@ -77,14 +156,25 @@ const displayMovements = function (movements) {
     return;
   }
 
-  movements.forEach(function (mov, i) {
-    const type = mov > 0 ? 'deposit' : 'withdrawal';
+  movements.forEach(function ({ amount, date }, i) {
+    const type = amount > 0 ? 'deposit' : 'withdrawal';
+    const displayDate = formatMovementDate(new Date(date));
+
+    const displayAmount = createCurrencyFormatter(
+      {
+        style: 'currency',
+        currency: currentUser.currency,
+      },
+      currentUser.locale
+    ).format(amount);
+
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${
       i + 1
     } ${type}</div>
-        <div class="movements__value">${mov.toFixed(2)}€</div>
+    <div class="movements__date">${displayDate}</div>
+        <div class="movements__value">${displayAmount}</div>
       </div>
     `;
 
@@ -93,46 +183,75 @@ const displayMovements = function (movements) {
 };
 
 const getUserBalance = user =>
-  user.movements.reduce((acc, cur) => acc + cur, 0);
+  user.movements.reduce((acc, cur) => acc + cur.amount, 0);
 
 const calcDisplayBalance = function (user) {
   if (!user) {
-    labelBalance.textContent = '0000€';
-    return;
+    return (labelBalance.textContent = '');
   }
 
-  const balance = getUserBalance(user);
-  labelBalance.textContent = `${balance.toFixed(2)}€`;
+  const formatter = createCurrencyFormatter(
+    {
+      style: 'currency',
+      currency: user.currency,
+    },
+    user.locale
+  );
+
+  labelBalance.textContent = formatter.format(getUserBalance(user));
 };
 
 const calcDisplaySummary = function (user) {
   if (!user) {
-    labelSumIn.textContent =
+    return (labelSumIn.textContent =
       labelSumOut.textContent =
       labelSumInterest.textContent =
-        '0000€';
-    return;
+        '');
   }
+
+  const formatter = createCurrencyFormatter(
+    {
+      style: 'currency',
+      currency: user.currency,
+    },
+    user.locale
+  );
+
+  const accumulate = (acc, { amount }) => acc + amount;
 
   const { movements, interestRate } = user;
 
-  const deposits = movements.filter(m => m > 0);
-  const sumIn = deposits.reduce((acc, cur) => acc + cur, 0);
+  const deposits = movements.filter(({ amount }) => amount > 0);
+  const sumIn = deposits.reduce(accumulate, 0);
 
-  labelSumIn.textContent = `${sumIn.toFixed(2)}€`;
+  labelSumIn.textContent = formatter.format(sumIn);
 
   const sumOut = movements
-    .filter(m => m < 0)
-    .reduce((acc, cur) => acc + cur, 0);
+    .filter(({ amount }) => amount < 0)
+    .reduce(accumulate, 0);
 
-  labelSumOut.textContent = `${Math.abs(sumOut.toFixed(2))}€`;
+  labelSumOut.textContent = formatter.format(Math.abs(sumOut));
 
-  const sumInterest = deposits.reduce((acc, cur) => {
-    const interest = (cur * interestRate) / 100;
+  const sumInterest = deposits.reduce((acc, { amount }) => {
+    const interest = (amount * interestRate) / 100;
     return interest > 1 ? acc + interest : acc;
   }, 0);
 
-  labelSumInterest.textContent = `${sumInterest.toFixed(2)}€`;
+  labelSumInterest.textContent = formatter.format(sumInterest);
+};
+
+const displayDate = () => {
+  const options = {
+    hour: 'numeric',
+    minute: 'numeric',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  };
+
+  labelDate.textContent = getDateFormatter(options, currentUser.locale).format(
+    new Date()
+  );
 };
 
 const createUserName = user =>
@@ -153,17 +272,48 @@ const updateDisplay = user => {
   displayMovements(user?.movements);
   calcDisplayBalance(user);
   calcDisplaySummary(user);
+  displayDate();
 };
 
 const logout = () => {
+  clearInterval(interval);
   labelWelcome.textContent = '';
   containerApp.style.opacity = 0;
   updateDisplay();
 };
 
-const login = () => {
-  const inputUserName = inputLoginUsername.value;
-  const inputPin = +inputLoginPin.value;
+const convertSecondsToTime = totalSeconds => {
+  let seconds = totalSeconds % 60;
+  let minutes = Math.floor(totalSeconds / 60);
+  return `${zeroPad(minutes)}:${zeroPad(seconds)}`;
+};
+
+const setLogoutTimer = () => {
+  if (interval) {
+    clearInterval(interval);
+  }
+
+  let timeLeft = 30;
+
+  labelTimer.textContent = convertSecondsToTime(timeLeft);
+
+  interval = setInterval(() => {
+    timeLeft--;
+
+    console.log(timeLeft);
+
+    labelTimer.textContent = convertSecondsToTime(timeLeft);
+
+    if (timeLeft === 0) {
+      clearInterval(interval);
+      logout();
+    }
+  }, 1000);
+};
+
+const login = (u, p) => {
+  const inputUserName = u || inputLoginUsername.value;
+  const inputPin = p || +inputLoginPin.value;
 
   inputLoginUsername.value = inputLoginPin.value = '';
   inputLoginPin.blur();
@@ -179,6 +329,8 @@ const login = () => {
   if (pin !== inputPin) {
     return;
   }
+
+  setLogoutTimer();
 
   currentUser = user;
 
@@ -212,8 +364,16 @@ const transfer = () => {
     return;
   }
 
-  user.movements.push(inputAmount);
-  currentUser.movements.push(-inputAmount);
+  const date = new Date().toISOString();
+
+  user.movements.push({
+    amount: inputAmount,
+    date,
+  });
+  currentUser.movements.push({
+    amount: -inputAmount,
+    date,
+  });
 
   updateDisplay(currentUser);
 };
@@ -234,7 +394,10 @@ const closeAccount = user => {
     containerApp.style.opacity = 0;
 
     updateDisplay();
+    return true;
   }
+
+  return false;
 };
 
 const loan = () => {
@@ -245,19 +408,30 @@ const loan = () => {
     return;
   }
 
-  const canBeGranted = currentUser.movements.some(m => m >= inputAmount * 0.1);
+  const canBeGranted = currentUser.movements.some(
+    m => m.amount >= inputAmount * 0.1
+  );
 
   if (!canBeGranted) {
     return;
   }
 
-  currentUser.movements.push(inputAmount);
-  updateDisplay(currentUser);
+  setTimeout(() => {
+    currentUser.movements.push({
+      amount: inputAmount,
+      date: new Date().toISOString(),
+    });
+    updateDisplay(currentUser);
+  }, 2500);
 };
 
 const sort = () => {
   if (!isSorted) {
-    displayMovements(currentUser.movements.slice().sort((a, b) => a - b));
+    displayMovements(
+      currentUser.movements
+        .slice()
+        .sort(({ amount: a }, { amount: b }) => a - b)
+    );
   } else {
     displayMovements(currentUser.movements);
   }
@@ -268,18 +442,30 @@ const sort = () => {
 // APPLICATION STATE
 let currentUser;
 let isSorted = false;
+const autoLogoutTime = 10;
+let interval;
 
 // EVENT LISTENERS
-btnSort.addEventListener('click', sort);
+btnSort.addEventListener('click', function () {
+  sort();
+  setLogoutTimer();
+});
 
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
+  setLogoutTimer();
   loan();
 });
 
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
-  closeAccount(currentUser);
+  const isCLosed = closeAccount(currentUser);
+
+  if (!isCLosed) {
+    setLogoutTimer();
+  } else {
+    clearInterval(interval);
+  }
 });
 
 btnLogin.addEventListener('click', function (e) {
@@ -294,14 +480,9 @@ btnLogin.addEventListener('click', function (e) {
 
 btnTransfer.addEventListener('click', function (e) {
   e.preventDefault();
+  setLogoutTimer();
   transfer();
 });
 
-// LECTURES
-const currencies = new Map([
-  ['USD', 'United States dollar'],
-  ['EUR', 'Euro'],
-  ['GBP', 'Pound sterling'],
-]);
-
-const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+// LOGIN FOR TESTING PURPOSES
+login('js', 1111);
