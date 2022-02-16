@@ -485,4 +485,4 @@ btnTransfer.addEventListener('click', function (e) {
 });
 
 // LOGIN FOR TESTING PURPOSES
-login('js', 1111);
+// login('js', 1111);
